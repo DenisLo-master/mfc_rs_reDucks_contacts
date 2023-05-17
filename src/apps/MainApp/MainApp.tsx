@@ -1,13 +1,17 @@
-import React, {useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import './MainApp.scss';
-import {ThemeProvider} from 'react-bootstrap';
-import {BrowserRouter, Route, Routes} from 'react-router-dom';
-import {Layout} from 'src/components/Layout';
-import {ContactListPage, GroupPage, ContactPage, FavoritListPage, GroupListPage} from 'src/pages';
-import {ContactDto} from 'src/types/dto/ContactDto';
-import {FavoriteContactsDto} from 'src/types/dto/FavoriteContactsDto';
-import {GroupContactsDto} from 'src/types/dto/GroupContactsDto';
-import {DATA_CONTACT, DATA_GROUP_CONTACT} from 'src/__data__';
+import { ThemeProvider } from 'react-bootstrap';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { Layout } from 'src/components/Layout';
+import { ContactListPage, GroupPage, ContactPage, FavoritListPage, GroupListPage } from 'src/pages';
+import { ContactDto } from 'src/types/dto/ContactDto';
+import { FavoriteContactsDto } from 'src/types/dto/FavoriteContactsDto';
+import { GroupContactsDto } from 'src/types/dto/GroupContactsDto';
+import { DATA_CONTACT, DATA_GROUP_CONTACT } from 'src/__data__';
+import { Login } from 'src/components/auth/Login';
+import { ProtectedRoutes } from '../ProtectedRoutes';
+import { checkAuth } from 'src/ducks/auth';
+import { useAppDispatch } from 'src/ducks/hooks';
 
 export const MainApp = () => {
   const contactsState = useState<ContactDto[]>(DATA_CONTACT);
@@ -19,6 +23,12 @@ export const MainApp = () => {
   ]);
   const groupContactsState = useState<GroupContactsDto[]>(DATA_GROUP_CONTACT);
 
+
+  const dispatch = useAppDispatch()
+  useEffect(() => {
+    dispatch(checkAuth())
+  }, [])
+
   return (
     <ThemeProvider
       breakpoints={['xxxl', 'xxl', 'xl', 'lg', 'md', 'sm', 'xs', 'xxs']}
@@ -26,15 +36,11 @@ export const MainApp = () => {
     >
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={
-              <ContactListPage
-                contactsState={contactsState}
-                favoriteContactsState={favoriteContactsState}
-                groupContactsState={groupContactsState}
-              />
-            } />
-            <Route path="contact">
+          <Route element={<ProtectedRoutes />}>
+            <Route path='/' element={<Login />} />
+          </Route>
+          <Route element={<ProtectedRoutes auth={true} />}>
+            <Route path="home" element={<Layout />}>
               <Route index element={
                 <ContactListPage
                   contactsState={contactsState}
@@ -42,14 +48,25 @@ export const MainApp = () => {
                   groupContactsState={groupContactsState}
                 />
               } />
-              <Route path=":contactId" element={
-                <ContactPage
-                  contactsState={contactsState}
-                  favoriteContactsState={favoriteContactsState}
-                  groupContactsState={groupContactsState}
-                />
-              } />
+              <Route path="contact">
+                <Route index element={
+                  <ContactListPage
+                    contactsState={contactsState}
+                    favoriteContactsState={favoriteContactsState}
+                    groupContactsState={groupContactsState}
+                  />
+                } />
+                <Route path=":contactId" element={
+                  <ContactPage
+                    contactsState={contactsState}
+                    favoriteContactsState={favoriteContactsState}
+                    groupContactsState={groupContactsState}
+                  />
+                } />
+              </Route>
             </Route>
+          </Route>
+          <Route element={<ProtectedRoutes auth={true} />}>
             <Route path="groups">
               <Route index element={
                 <GroupListPage
@@ -66,6 +83,8 @@ export const MainApp = () => {
                 />
               } />
             </Route>
+          </Route>
+          <Route element={<ProtectedRoutes auth={true} />}>
             <Route path="favorit" element={
               <FavoritListPage
                 contactsState={contactsState}
@@ -77,5 +96,6 @@ export const MainApp = () => {
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
+
   );
 };

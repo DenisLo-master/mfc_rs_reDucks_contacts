@@ -1,27 +1,33 @@
-import React, {memo, useEffect, useState} from 'react';
-import {CommonPageProps} from './types';
-import {Col, Row} from 'react-bootstrap';
-import {useParams} from 'react-router-dom';
-import {ContactDto} from 'src/types/dto/ContactDto';
-import {GroupContactsDto} from 'src/types/dto/GroupContactsDto';
-import {GroupContactsCard} from 'src/components/GroupContactsCard';
-import {Empty} from 'src/components/Empty';
-import {ContactCard} from 'src/components/ContactCard';
+import React, { memo, useEffect, useState } from 'react';
+import { CommonPageProps } from './types';
+import { Col, Row } from 'react-bootstrap';
+import { useParams } from 'react-router-dom';
+import { ContactDto } from 'src/types/dto/ContactDto';
+import { GroupContactsDto } from 'src/types/dto/GroupContactsDto';
+import { GroupContactsCard } from 'src/components/GroupContactsCard';
+import { Empty } from 'src/components/Empty';
+import { ContactCard } from 'src/components/ContactCard';
+import { useAddFavoriteMutation } from 'src/ducks/favorite';
 
 export const GroupPage = memo<CommonPageProps>(({
   contactsState,
   groupContactsState
 }) => {
-  const {groupId} = useParams<{ groupId: string }>();
+  const [addFavorite] = useAddFavoriteMutation()
+  const { groupId } = useParams<{ groupId: string }>();
   const [contacts, setContacts] = useState<ContactDto[]>([]);
   const [groupContacts, setGroupContacts] = useState<GroupContactsDto>();
+  const favoritesHandle = (contactsId: string) => {
+    console.log('Favorites', contactsId)
+    addFavorite(contactsId)
+  }
 
   useEffect(() => {
-    const findGroup = groupContactsState[0].find(({id}) => id === groupId);
+    const findGroup = groupContactsState[0].find(({ id }) => id === groupId);
     setGroupContacts(findGroup);
     setContacts(() => {
       if (findGroup) {
-        return contactsState[0].filter(({id}) => findGroup.contactIds.includes(id))
+        return contactsState[0].filter(({ id }) => findGroup.contactIds.includes(id))
       }
       return [];
     });
@@ -42,7 +48,11 @@ export const GroupPage = memo<CommonPageProps>(({
             <Row xxl={4} className="g-4">
               {contacts.map((contact) => (
                 <Col key={contact.id}>
-                  <ContactCard contact={contact} withLink />
+                  <ContactCard
+                    contact={contact}
+                    setFavorite={favoritesHandle}
+                    withLink
+                  />
                 </Col>
               ))}
             </Row>
